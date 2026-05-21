@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: ats-uce-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ats_uce_db
+      DATABASE_USER: ats_user
+      DATABASE_PASSWORD: ats_password
+      DATABASE_URL: postgresql://ats_user:ats_password@database:5432/ats_uce_db
+    depends_on:
+      - database
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ats-uce-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  database:
+    image: postgres:16
+    container_name: ats-uce-database
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ats_uce_db
+      POSTGRES_USER: ats_user
+      POSTGRES_PASSWORD: ats_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:alpine
+    container_name: ats-uce-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
